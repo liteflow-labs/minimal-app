@@ -1,5 +1,6 @@
 import styles from "../styles/app.module.css";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { setContext } from "@apollo/client/link/context";
 import {
   ApolloClient,
   ApolloProvider,
@@ -9,8 +10,17 @@ import {
 import { getDefaultWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
 import { AppProps } from "next/app";
-import { chain, configureChains, createClient, WagmiConfig } from "wagmi";
+import {
+  chain,
+  configureChains,
+  useAccount,
+  createClient,
+  WagmiConfig,
+  useSigner,
+} from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
+import { PropsWithChildren, useEffect } from "react";
+import { useAuthenticate } from "@nft/hooks";
 
 const { chains, provider } = configureChains(
   [chain.ropsten],
@@ -25,25 +35,62 @@ const wagmiClient = createClient({
   provider,
 });
 
-const apolloClient = new ApolloClient({
-  link: createHttpLink({
-    uri: process.env.NEXT_PUBLIC_ENDPOINT,
+const authLink = setContext((_, context) => {
+  const authorization = localStorage.getItem("authorization");
+  return {
+    ...context,
     headers: {
-      authorization: `Bearer ${process.env.NEXT_PUBLIC_JWT}`,
+      ...context.headers,
+      authorization: authorization ? `Bearer ${authorization}` : undefined,
     },
-  }),
+  };
+});
+
+const apolloClient = new ApolloClient({
+  link: authLink.concat(
+    createHttpLink({
+      uri: process.env.NEXT_PUBLIC_ENDPOINT,
+    })
+  ),
   cache: new InMemoryCache({}),
 });
+
+function AccountManager(props: PropsWithChildren) {
+  const [authenticate, { loading }] = useAuthenticate();
+  const { isConnected, isDisconnected } = useAccount();
+  const { data: signer } = useSigner();
+
+  // Authenticate the user to save the authorization token in the
+  // localStorage for later use by the Apollo client
+  useEffect(() => {
+    if (!isConnected) return;
+    if (!signer) return;
+    if (loading) return;
+    authenticate(signer).then(({ jwtToken }) =>
+      localStorage.setItem("authorization", jwtToken)
+    );
+  }, [isConnected, signer]);
+
+  // Remove authorization token when the user disconnects
+  useEffect(() => {
+    if (!isDisconnected) return;
+    localStorage.removeItem("authorization");
+  });
+
+  return <>{props.children}</>;
+}
 
 function MyApp({ Component, pageProps }: AppProps): JSX.Element {
   return (
     <ApolloProvider client={apolloClient}>
       <WagmiConfig client={wagmiClient}>
         <RainbowKitProvider chains={chains} coolMode>
-          <div className={styles.app}>
-            <ConnectButton />
-            <Component {...pageProps} />
-          </div>
+          <AccountManager>
+            <div className={styles.app}>
+              <ConnectButton />
+              <Component {...pageProps} />
+            </div>
+          </AccountManager>
         </RainbowKitProvider>
       </WagmiConfig>
     </ApolloProvider>
