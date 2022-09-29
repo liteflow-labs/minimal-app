@@ -76,7 +76,7 @@ function AccountManager(props: PropsWithChildren) {
   useEffect(() => {
     if (!isDisconnected) return;
     localStorage.removeItem("authorization");
-  });
+  }, [isDisconnected]);
 
   return <>{props.children}</>;
 }
