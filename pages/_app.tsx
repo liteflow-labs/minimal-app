@@ -37,11 +37,12 @@ const wagmiClient = createClient({
 
 const authLink = setContext((_, context) => {
   const authorization = localStorage.getItem("authorization");
+  if (!authorization) return context;
   return {
     ...context,
     headers: {
       ...context.headers,
-      authorization: authorization ? `Bearer ${authorization}` : undefined,
+      authorization: `Bearer ${authorization}`,
     },
   };
 });
