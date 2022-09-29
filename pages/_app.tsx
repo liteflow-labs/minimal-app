@@ -36,7 +36,8 @@ const wagmiClient = createClient({
 });
 
 const authLink = setContext((_, context) => {
-  const authorization = localStorage.getItem("authorization");
+  const address = localStorage.getItem("authorization.address");
+  const authorization = localStorage.getItem(`authorization.${address}`);
   if (!authorization) return context;
   return {
     ...context,
@@ -58,7 +59,7 @@ const apolloClient = new ApolloClient({
 
 function AccountManager(props: PropsWithChildren) {
   const [authenticate, { loading }] = useAuthenticate();
-  const { isConnected, isDisconnected } = useAccount();
+  const { address, isConnected, isDisconnected } = useAccount();
   const { data: signer } = useSigner();
 
   // Authenticate the user to save the authorization token in the
@@ -67,15 +68,19 @@ function AccountManager(props: PropsWithChildren) {
     if (!isConnected) return;
     if (!signer) return;
     if (loading) return;
-    authenticate(signer).then(({ jwtToken }) =>
-      localStorage.setItem("authorization", jwtToken)
-    );
-  }, [isConnected, signer]);
+    if (localStorage.getItem(`authorization.${address}`)) return;
+    authenticate(signer).then(({ jwtToken }) => {
+      localStorage.setItem("authorization.address", address);
+      localStorage.setItem(`authorization.${address}`, jwtToken);
+    });
+  }, [address, isConnected, signer, loading]);
 
   // Remove authorization token when the user disconnects
   useEffect(() => {
     if (!isDisconnected) return;
-    localStorage.removeItem("authorization");
+    const address = localStorage.getItem("authorization.address");
+    localStorage.removeItem(`authorization.${address}`);
+    localStorage.removeItem("authorization.address");
   }, [isDisconnected]);
 
   return <>{props.children}</>;
