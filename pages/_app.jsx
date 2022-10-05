@@ -1,5 +1,3 @@
-import styles from "../styles/app.module.css";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { setContext } from "@apollo/client/link/context";
 import {
   ApolloClient,
@@ -7,9 +5,6 @@ import {
   createHttpLink,
   InMemoryCache,
 } from "@apollo/client";
-import { getDefaultWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit";
-import "@rainbow-me/rainbowkit/styles.css";
-import { AppProps } from "next/app";
 import {
   chain,
   configureChains,
@@ -19,19 +14,16 @@ import {
   useSigner,
 } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
-import { PropsWithChildren, useEffect } from "react";
+import { useEffect } from "react";
 import { useAuthenticate } from "@nft/hooks";
 
-const { chains, provider } = configureChains(
+const { provider } = configureChains(
   [chain.polygonMumbai], // we want Polygon Mumbai
   [publicProvider()]
 );
 
-const { connectors } = getDefaultWallets({ appName: "Test", chains });
-
 const wagmiClient = createClient({
   autoConnect: true,
-  connectors,
   provider,
 });
 
@@ -57,7 +49,7 @@ const apolloClient = new ApolloClient({
   cache: new InMemoryCache({}),
 });
 
-function AccountManager(props: PropsWithChildren) {
+function AccountManager(props) {
   const [authenticate, { loading }] = useAuthenticate();
   const { address, isConnected, isDisconnected } = useAccount();
   const { data: signer } = useSigner();
@@ -86,18 +78,15 @@ function AccountManager(props: PropsWithChildren) {
   return <>{props.children}</>;
 }
 
-function MyApp({ Component, pageProps }: AppProps): JSX.Element {
+function MyApp({ Component, pageProps }) {
   return (
     <ApolloProvider client={apolloClient}>
       <WagmiConfig client={wagmiClient}>
-        <RainbowKitProvider chains={chains} coolMode>
-          <AccountManager>
-            <div className={styles.app}>
-              <ConnectButton />
-              <Component {...pageProps} />
-            </div>
-          </AccountManager>
-        </RainbowKitProvider>
+        <AccountManager>
+          <div>
+            <Component {...pageProps} />
+          </div>
+        </AccountManager>
       </WagmiConfig>
     </ApolloProvider>
   );
