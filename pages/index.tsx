@@ -11,14 +11,14 @@ export default function Home() {
     signer as (Signer & TypedDataSigner) | undefined
   );
   const assetId =
-    "3-0xdf5b1a360f64fa8a6702efa8fe41946972ba5a7a-82153703594476779040147787829905511244693377253089187464282670230128051716726";
+    "80001-0x7c68c3c59ceb245733a2fdeb47f5f7d6dbcc65b3-60249402084937876423066029128237587855293854847399126863606291191289075471730";
 
   const create = useCallback(async () => {
-    const amount = parseFloat(prompt("amount in USDC"));
+    const amount = parseFloat(prompt('amount in USDC'))
     const id = await _create({
       type: "BUY",
       assetId,
-      currencyId: "3-0x07865c6e87b9f70255377e024ace6630c1eaa37f",
+      currencyId: "80001-0x0fa8781a83e46826621b3bc094ea2a0212e71b23", // USDC on Polygon Mumbai
       expiredAt: new Date(Date.now() + 1000 * 60 * 60),
       quantity: BigNumber.from(1),
       unitPrice: BigNumber.from(amount * 1e6),
@@ -30,15 +30,15 @@ export default function Home() {
     <>
       {signer && (
         <a className={styles.btn} onClick={create}>
-          create offer
+          Create offer
         </a>
       )}
       <a
         className={styles.btn}
-        href="https://nft-test-ropsten-liteflow.vercel.app/tokens/3-0xdf5b1a360f64fa8a6702efa8fe41946972ba5a7a-82153703594476779040147787829905511244693377253089187464282670230128051716726?filter=bids"
+        href={`https://liteflow-nft-test-polygon-mumbai.vercel.app/tokens/${assetId}?filter=bids`}
         target="_blank"
       >
-        Check my bid
+        Check bids
       </a>
     </>
   );
