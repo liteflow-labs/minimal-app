@@ -23,7 +23,7 @@ import { PropsWithChildren, useEffect } from "react";
 import { useAuthenticate } from "@nft/hooks";
 
 const { chains, provider } = configureChains(
-  [chain.ropsten],
+  [chain.polygonMumbai], // we want Polygon Mumbai
   [publicProvider()]
 );
 
