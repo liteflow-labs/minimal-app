@@ -37,6 +37,7 @@ export default function Home() {
         className={styles.btn}
         href={`https://liteflow-nft-test-polygon-mumbai.vercel.app/tokens/${assetId}?filter=bids`}
         target="_blank"
+        rel="noreferrer"
       >
         Check bids
       </a>

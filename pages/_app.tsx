@@ -73,7 +73,7 @@ function AccountManager(props: PropsWithChildren) {
       localStorage.setItem("authorization.address", address);
       localStorage.setItem(`authorization.${address}`, jwtToken);
     });
-  }, [address, isConnected, signer, loading]);
+  }, [authenticate, address, isConnected, signer, loading]);
 
   // Remove authorization token when the user disconnects
   useEffect(() => {
