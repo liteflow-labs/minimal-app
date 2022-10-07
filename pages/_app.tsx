@@ -23,11 +23,14 @@ import { PropsWithChildren, useEffect } from 'react'
 import { useAuthenticate } from '@nft/hooks'
 
 const { chains, provider } = configureChains(
-  [chain.polygonMumbai], // we want Polygon Mumbai
+  [chain[process.env.NEXT_PUBLIC_CHAIN_NAME]], // Pass the name of the Wagmi supported chain. See "chain" types or (https://wagmi.sh/docs/providers/configuring-chains#chains)
   [publicProvider()],
 )
 
-const { connectors } = getDefaultWallets({ appName: 'Test', chains })
+const { connectors } = getDefaultWallets({
+  appName: process.env.NEXT_PUBLIC_APP_NAME, // Pass the name of your app
+  chains,
+})
 
 const wagmiClient = createClient({
   autoConnect: true,
@@ -51,7 +54,7 @@ const authLink = setContext((_, context) => {
 const apolloClient = new ApolloClient({
   link: authLink.concat(
     createHttpLink({
-      uri: process.env.NEXT_PUBLIC_ENDPOINT,
+      uri: process.env.NEXT_PUBLIC_ENDPOINT, // Pass the API endpoint of your app
     }),
   ),
   cache: new InMemoryCache({}),
