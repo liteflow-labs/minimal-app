@@ -2,7 +2,8 @@ import { Signer, TypedDataSigner } from '@ethersproject/abstract-signer'
 import { useCreateOffer } from '@nft/hooks'
 import { BigNumber } from 'ethers'
 import { useCallback } from 'react'
-import { useSigner } from 'wagmi'
+import { chain, useAccount, useConnect, useDisconnect, useSigner } from 'wagmi'
+import { InjectedConnector } from 'wagmi/connectors/injected'
 import styles from '../styles/app.module.css'
 
 export default function Home() {
@@ -10,6 +11,12 @@ export default function Home() {
   const [_create] = useCreateOffer(
     signer as (Signer & TypedDataSigner) | undefined,
   )
+  const { address, isConnected } = useAccount()
+  const { connect } = useConnect({
+    connector: new InjectedConnector(),
+    chainId: chain[process.env.NEXT_PUBLIC_CHAIN_NAME].chainId, // Polygon Mumbai
+  })
+  const { disconnect } = useDisconnect()
 
   const create = useCallback(async () => {
     const amount = parseFloat(prompt('amount in USDC'))
@@ -26,10 +33,20 @@ export default function Home() {
 
   return (
     <>
-      {signer && (
-        <a className={styles.btn} onClick={create}>
-          Create offer
-        </a>
+      {!isConnected ? (
+        <button className={styles.btn} onClick={() => connect()}>
+          Connect Wallet
+        </button>
+      ) : (
+        <>
+          <button className={styles.btn} onClick={() => disconnect()}>
+            Disconnect Wallet
+          </button>
+          <p>Your address: {address}</p>
+          <button className={styles.btn} onClick={create}>
+            Create offer
+          </button>
+        </>
       )}
     </>
   )

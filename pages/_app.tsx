@@ -1,5 +1,4 @@
 import styles from '../styles/app.module.css'
-import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { setContext } from '@apollo/client/link/context'
 import {
   ApolloClient,
@@ -7,8 +6,6 @@ import {
   createHttpLink,
   InMemoryCache,
 } from '@apollo/client'
-import { getDefaultWallets, RainbowKitProvider } from '@rainbow-me/rainbowkit'
-import '@rainbow-me/rainbowkit/styles.css'
 import { AppProps } from 'next/app'
 import {
   chain,
@@ -22,19 +19,13 @@ import { publicProvider } from 'wagmi/providers/public'
 import { PropsWithChildren, useEffect } from 'react'
 import { useAuthenticate } from '@nft/hooks'
 
-const { chains, provider } = configureChains(
+const { provider } = configureChains(
   [chain[process.env.NEXT_PUBLIC_CHAIN_NAME]], // Pass the name of the Wagmi supported chain. See "chain" types or (https://wagmi.sh/docs/providers/configuring-chains#chains)
   [publicProvider()],
 )
 
-const { connectors } = getDefaultWallets({
-  appName: process.env.NEXT_PUBLIC_APP_NAME, // Pass the name of your app
-  chains,
-})
-
 const wagmiClient = createClient({
   autoConnect: true,
-  connectors,
   provider,
 })
 
@@ -60,7 +51,7 @@ const apolloClient = new ApolloClient({
   cache: new InMemoryCache({}),
 })
 
-function AccountManager(props: PropsWithChildren) {
+function AccountManager(props: PropsWithChildren<{}>) {
   const [authenticate, { loading }] = useAuthenticate()
   const { address, isConnected, isDisconnected } = useAccount()
   const { data: signer } = useSigner()
@@ -93,14 +84,11 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
   return (
     <ApolloProvider client={apolloClient}>
       <WagmiConfig client={wagmiClient}>
-        <RainbowKitProvider chains={chains} coolMode>
-          <AccountManager>
-            <div className={styles.app}>
-              <ConnectButton />
-              <Component {...pageProps} />
-            </div>
-          </AccountManager>
-        </RainbowKitProvider>
+        <AccountManager>
+          <div className={styles.app}>
+            <Component {...pageProps} />
+          </div>
+        </AccountManager>
       </WagmiConfig>
     </ApolloProvider>
   )
