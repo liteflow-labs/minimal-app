@@ -16,7 +16,7 @@ import {
   useAccount,
   createClient,
   WagmiConfig,
-  useSigner,
+  useDisconnect,
 } from 'wagmi'
 import { publicProvider } from 'wagmi/providers/public'
 import { PropsWithChildren, useEffect } from 'react'
@@ -62,29 +62,27 @@ const apolloClient = new ApolloClient({
 
 function AccountManager(props: PropsWithChildren) {
   const [authenticate, { loading }] = useAuthenticate()
-  const { address, isConnected, isDisconnected } = useAccount()
-  const { data: signer } = useSigner()
-
-  // Authenticate the user to save the authorization token in the
-  // localStorage for later use by the Apollo client
-  useEffect(() => {
-    if (!isConnected) return
-    if (!signer) return
-    if (loading) return
-    if (localStorage.getItem(`authorization.${address}`)) return
-    authenticate(signer).then(({ jwtToken }) => {
-      localStorage.setItem('authorization.address', address)
-      localStorage.setItem(`authorization.${address}`, jwtToken)
-    })
-  }, [authenticate, address, isConnected, signer, loading])
-
-  // Remove authorization token when the user disconnects
-  useEffect(() => {
-    if (!isDisconnected) return
-    const address = localStorage.getItem('authorization.address')
-    localStorage.removeItem(`authorization.${address}`)
-    localStorage.removeItem('authorization.address')
-  }, [isDisconnected])
+  const { disconnect } = useDisconnect()
+  const account = useAccount({
+    async onConnect({ address, connector }) {
+      const signer = await connector.getSigner()
+      if (localStorage.getItem(`authorization.${address}`)) return
+      authenticate(signer)
+        .then(({ jwtToken }) => {
+          localStorage.setItem('authorization.address', address)
+          localStorage.setItem(`authorization.${address}`, jwtToken)
+        })
+        .catch(() => {
+          alert('Pleace accept the signature in your wallet and try again.')
+          disconnect()
+        })
+    },
+    onDisconnect() {
+      const address = localStorage.getItem('authorization.address')
+      localStorage.removeItem(`authorization.${address}`)
+      localStorage.removeItem('authorization.address')
+    },
+  })
 
   return <>{props.children}</>
 }
