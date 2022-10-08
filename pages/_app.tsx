@@ -63,21 +63,34 @@ const apolloClient = new ApolloClient({
 function AccountManager(props: PropsWithChildren) {
   const [authenticate, { loading }] = useAuthenticate()
   const { disconnect } = useDisconnect()
-  const account = useAccount({
+  useAccount({
     async onConnect({ address, connector }) {
+      // check if user is already authenticated, not only if its wallet is connected
+      if (
+        localStorage.getItem('authorization.address') === address &&
+        localStorage.getItem(`authorization.${address}`)
+      ) {
+        // TODO: should check the expiration date of the jwt token to make sure it's still valid
+        return
+      }
+
+      // authenticate user
       const signer = await connector.getSigner()
-      if (localStorage.getItem(`authorization.${address}`)) return
       authenticate(signer)
         .then(({ jwtToken }) => {
           localStorage.setItem('authorization.address', address)
           localStorage.setItem(`authorization.${address}`, jwtToken)
+          console.log('user authenticated')
         })
-        .catch(() => {
-          alert('Pleace accept the signature in your wallet and try again.')
+        .catch((error) => {
+          console.error(error)
+
+          // disconnect wallet on error
           disconnect()
         })
     },
     onDisconnect() {
+      // remove authorization data
       const address = localStorage.getItem('authorization.address')
       localStorage.removeItem(`authorization.${address}`)
       localStorage.removeItem('authorization.address')
