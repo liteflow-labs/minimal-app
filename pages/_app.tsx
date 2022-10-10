@@ -16,7 +16,7 @@ import {
   useAccount,
   createClient,
   WagmiConfig,
-  useSigner,
+  useDisconnect,
 } from 'wagmi'
 import { publicProvider } from 'wagmi/providers/public'
 import { PropsWithChildren, useEffect } from 'react'
@@ -62,29 +62,40 @@ const apolloClient = new ApolloClient({
 
 function AccountManager(props: PropsWithChildren) {
   const [authenticate, { loading }] = useAuthenticate()
-  const { address, isConnected, isDisconnected } = useAccount()
-  const { data: signer } = useSigner()
+  const { disconnect } = useDisconnect()
+  useAccount({
+    async onConnect({ address, connector }) {
+      // check if user is already authenticated, not only if its wallet is connected
+      if (
+        localStorage.getItem('authorization.address') === address &&
+        localStorage.getItem(`authorization.${address}`)
+      ) {
+        // TODO: should check the expiration date of the jwt token to make sure it's still valid
+        return
+      }
 
-  // Authenticate the user to save the authorization token in the
-  // localStorage for later use by the Apollo client
-  useEffect(() => {
-    if (!isConnected) return
-    if (!signer) return
-    if (loading) return
-    if (localStorage.getItem(`authorization.${address}`)) return
-    authenticate(signer).then(({ jwtToken }) => {
-      localStorage.setItem('authorization.address', address)
-      localStorage.setItem(`authorization.${address}`, jwtToken)
-    })
-  }, [authenticate, address, isConnected, signer, loading])
+      // authenticate user
+      const signer = await connector.getSigner()
+      authenticate(signer)
+        .then(({ jwtToken }) => {
+          localStorage.setItem('authorization.address', address)
+          localStorage.setItem(`authorization.${address}`, jwtToken)
+          console.log('user authenticated')
+        })
+        .catch((error) => {
+          console.error(error)
 
-  // Remove authorization token when the user disconnects
-  useEffect(() => {
-    if (!isDisconnected) return
-    const address = localStorage.getItem('authorization.address')
-    localStorage.removeItem(`authorization.${address}`)
-    localStorage.removeItem('authorization.address')
-  }, [isDisconnected])
+          // disconnect wallet on error
+          disconnect()
+        })
+    },
+    onDisconnect() {
+      // remove authorization data
+      const address = localStorage.getItem('authorization.address')
+      localStorage.removeItem(`authorization.${address}`)
+      localStorage.removeItem('authorization.address')
+    },
+  })
 
   return <>{props.children}</>
 }
