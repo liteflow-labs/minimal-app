@@ -10,18 +10,16 @@ export default function Home() {
   const [_create] = useCreateOffer(
     signer as (Signer & TypedDataSigner) | undefined,
   )
-  const assetId =
-    '80001-0x7c68c3c59ceb245733a2fdeb47f5f7d6dbcc65b3-60249402084937876423066029128237587855293854847399126863606291191289075471730'
 
   const create = useCallback(async () => {
-    const amount = parseFloat(prompt('amount in USDC'))
+    const price = parseFloat(prompt('Price of the offer'))
     const id = await _create({
       type: 'BUY',
-      assetId,
-      currencyId: '80001-0x0fa8781a83e46826621b3bc094ea2a0212e71b23', // USDC on Polygon Mumbai
+      assetId: process.env.NEXT_PUBLIC_ASSET_ID, // Pass a desired asset ID,
+      currencyId: process.env.NEXT_PUBLIC_CURRENCY_ID, // Pass the desired currency ID
       expiredAt: new Date(Date.now() + 1000 * 60 * 60),
       quantity: BigNumber.from(1),
-      unitPrice: BigNumber.from(amount * 1e6),
+      unitPrice: BigNumber.from(price * 1e6), // Replace `1e6` by the right number of decimals of the used currency to shift the price to unit.
     })
     alert(id)
   }, [_create])
@@ -33,14 +31,6 @@ export default function Home() {
           Create offer
         </a>
       )}
-      <a
-        className={styles.btn}
-        href={`https://liteflow-nft-test-polygon-mumbai.vercel.app/tokens/${assetId}?filter=bids`}
-        target="_blank"
-        rel="noreferrer"
-      >
-        Check bids
-      </a>
     </>
   )
 }
