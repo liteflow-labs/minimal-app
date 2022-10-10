@@ -61,7 +61,7 @@ const apolloClient = new ApolloClient({
 })
 
 function AccountManager(props: PropsWithChildren) {
-  const [authenticate, { loading }] = useAuthenticate()
+  const [authenticate] = useAuthenticate()
   const { disconnect } = useDisconnect()
   useAccount({
     async onConnect({ address, connector }) {
