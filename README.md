@@ -1,34 +1,48 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Liteflow SDK Minimal App
+
+This is the Minimal App example on how to setup your project with Liteflow's [SDK](https://liteflow.gitbook.io/docs/). This implementation uses [Next.js](https://nextjs.org/) as well as third-party libraries like [Wagmi](https://wagmi.sh/) and [RainbowKit](https://www.rainbowkit.com/) for wallet interactions but feel free to implement in any project using [React](https://reactjs.org/) and your preferred web3 provider.
 
 ## Getting Started
 
-First, run the development server:
+First, you will need to get an [NPM Auth Token](https://docs.npmjs.com/using-private-packages-in-a-ci-cd-workflow#set-the-token-as-an-environment-variable-on-the-cicd-server) provided by the Liteflow team to authorize SDK's package installation. See our documentation about the [token installation](https://docs.liteflow.com/docs/#installation).
+
+Once this is in place, you are now able to run:
+
+```bash
+npm install
+```
+
+Copy the `.env.example`, rename to `.env.local` and fill in the environment variables according to your setup.
+
+```
+# Replace with your app name
+NEXT_PUBLIC_APP_NAME="Acme Marketplace"
+
+# Replace with your API endpoint
+NEXT_PUBLIC_ENDPOINT="https://api.acme.com/graphql"
+
+# Replace with your desired chain supported by Wagmi (https://wagmi.sh/docs/providers/configuring-chains)
+NEXT_PUBLIC_CHAIN_NAME="polygonMumbai"
+
+# Replace with a valid Asset ID
+NEXT_PUBLIC_ASSET_ID="80001-0xe3fe92dfe68f4b074ee7daca7c700e7a11a11397-60249402084987642306602912823737587855293854847399126862551129956955539542019"
+
+# Replace by your chain's supported currency ID
+NEXT_PUBLIC_CURRENCY_ID="80001-0x0fa8781a83bc094ea2a023e46826621b12e71b23"
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
-
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
-
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
-
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+If you want to learn more about Lifeflow's SDK make sure to visit our [documentation](https://liteflow.gitbook.io/docs/).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Support
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+If you have any question or require support, feel free to [contact us](mailto:contact@liteflow.com).
