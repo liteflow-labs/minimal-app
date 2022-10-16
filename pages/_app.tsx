@@ -7,28 +7,12 @@ import {
   InMemoryCache,
 } from '@apollo/client'
 import { AppProps } from 'next/app'
-import {
-  chain,
-  configureChains,
-  useAccount,
-  createClient,
-  WagmiConfig,
-  useSigner,
-} from 'wagmi'
-import { publicProvider } from 'wagmi/providers/public'
-import { PropsWithChildren, useEffect } from 'react'
+import { useAccount, WagmiConfig, useDisconnect } from 'wagmi'
+import { PropsWithChildren } from 'react'
 import { useAuthenticate } from '@nft/hooks'
+import { wagmiClient } from '../config/wagmi'
 
-const { provider } = configureChains(
-  [chain[process.env.NEXT_PUBLIC_CHAIN_NAME]], // Pass the name of the Wagmi supported chain. See "chain" types or (https://wagmi.sh/docs/providers/configuring-chains#chains)
-  [publicProvider()],
-)
-
-const wagmiClient = createClient({
-  autoConnect: true,
-  provider,
-})
-
+// create logic to inject the authorization header to Apollo client using local storage
 const authLink = setContext((_, context) => {
   const address = localStorage.getItem('authorization.address')
   const authorization = localStorage.getItem(`authorization.${address}`)
@@ -42,6 +26,7 @@ const authLink = setContext((_, context) => {
   }
 })
 
+// init Apollo client
 const apolloClient = new ApolloClient({
   link: authLink.concat(
     createHttpLink({
@@ -52,30 +37,43 @@ const apolloClient = new ApolloClient({
 })
 
 function AccountManager(props: PropsWithChildren<{}>) {
-  const [authenticate, { loading }] = useAuthenticate()
-  const { address, isConnected, isDisconnected } = useAccount()
-  const { data: signer } = useSigner()
+  const [authenticate] = useAuthenticate()
+  const { disconnect } = useDisconnect()
+  useAccount({
+    async onConnect({ address, connector }) {
+      // check if user is already authenticated, not only if its wallet is connected
+      if (
+        localStorage.getItem('authorization.address') === address &&
+        localStorage.getItem(`authorization.${address}`)
+      ) {
+        // TODO: should check the expiration date of the jwt token to make sure it's still valid
+        return
+      }
 
-  // Authenticate the user to save the authorization token in the
-  // localStorage for later use by the Apollo client
-  useEffect(() => {
-    if (!isConnected) return
-    if (!signer) return
-    if (loading) return
-    if (localStorage.getItem(`authorization.${address}`)) return
-    authenticate(signer).then(({ jwtToken }) => {
-      localStorage.setItem('authorization.address', address)
-      localStorage.setItem(`authorization.${address}`, jwtToken)
-    })
-  }, [authenticate, address, isConnected, signer, loading])
+      // authenticate user
+      const signer = await connector.getSigner()
+      authenticate(signer)
+        .then(({ jwtToken }) => {
+          localStorage.setItem('authorization.address', address)
+          localStorage.setItem(`authorization.${address}`, jwtToken)
+          console.log('user authenticated')
+        })
+        .catch((error) => {
+          console.error(error)
 
-  // Remove authorization token when the user disconnects
-  useEffect(() => {
-    if (!isDisconnected) return
-    const address = localStorage.getItem('authorization.address')
-    localStorage.removeItem(`authorization.${address}`)
-    localStorage.removeItem('authorization.address')
-  }, [isDisconnected])
+          // disconnect wallet on error
+          disconnect()
+        })
+    },
+    onDisconnect() {
+      // FIXME: this is randomly trigger if auto-connect is true: https://github.com/wagmi-dev/wagmi/pull/1091
+      // remove authorization data
+      console.log('onDisconnect')
+      const address = localStorage.getItem('authorization.address')
+      localStorage.removeItem(`authorization.${address}`)
+      localStorage.removeItem('authorization.address')
+    },
+  })
 
   return <>{props.children}</>
 }
