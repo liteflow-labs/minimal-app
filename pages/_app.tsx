@@ -13,8 +13,7 @@ import {
 } from 'wagmi'
 import { publicProvider } from 'wagmi/providers/public'
 import { PropsWithChildren } from 'react'
-import { useAuthenticate } from '@nft/hooks'
-import { LiteflowProvider } from '@nft/hooks'
+import { LiteflowProvider, useAuthenticate } from '@nft/hooks'
 
 const { chains, provider } = configureChains(
   [chain[process.env.NEXT_PUBLIC_CHAIN_NAME]], // Pass the name of the Wagmi supported chain. See "chain" types or (https://wagmi.sh/docs/providers/configuring-chains#chains)
@@ -33,7 +32,8 @@ const wagmiClient = createClient({
 })
 
 function AccountManager(props: PropsWithChildren) {
-  const [authenticate] = useAuthenticate()
+  const [authenticate, { setAuthenticationToken, resetAuthenticationToken }] =
+    useAuthenticate()
   const { disconnect } = useDisconnect()
   useAccount({
     async onConnect({ address, connector }) {
@@ -42,6 +42,7 @@ function AccountManager(props: PropsWithChildren) {
         localStorage.getItem('authorization.address') === address &&
         localStorage.getItem(`authorization.${address}`)
       ) {
+        setAuthenticationToken(localStorage.getItem(`authorization.${address}`))
         // TODO: should check the expiration date of the jwt token to make sure it's still valid
         return
       }
@@ -66,6 +67,7 @@ function AccountManager(props: PropsWithChildren) {
       const address = localStorage.getItem('authorization.address')
       localStorage.removeItem(`authorization.${address}`)
       localStorage.removeItem('authorization.address')
+      resetAuthenticationToken()
     },
   })
 
