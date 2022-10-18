@@ -42,6 +42,7 @@ function AccountManager(props: PropsWithChildren) {
         localStorage.getItem('authorization.address') === address &&
         localStorage.getItem(`authorization.${address}`)
       ) {
+        // since the user is already authenticated we can autoconnect
         setAuthenticationToken(localStorage.getItem(`authorization.${address}`))
         // TODO: should check the expiration date of the jwt token to make sure it's still valid
         return
@@ -63,7 +64,7 @@ function AccountManager(props: PropsWithChildren) {
         })
     },
     onDisconnect() {
-      // remove authorization data
+      // remove authorization and authentication data
       const address = localStorage.getItem('authorization.address')
       localStorage.removeItem(`authorization.${address}`)
       localStorage.removeItem('authorization.address')
