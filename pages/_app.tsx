@@ -32,7 +32,7 @@ const wagmiClient = createClient({
 })
 
 function AccountManager(props: PropsWithChildren) {
-  const [authenticate] = useAuthenticate()
+  const [authenticate, { resetAuthenticationToken }] = useAuthenticate()
   const { disconnect } = useDisconnect()
   useAccount({
     async onConnect({ address, connector }) {
@@ -48,23 +48,20 @@ function AccountManager(props: PropsWithChildren) {
       // authenticate user
       const signer = await connector.getSigner()
       authenticate(signer)
-        .then(({ jwtToken }) => {
-          localStorage.setItem('authorization.address', address)
-          localStorage.setItem(`authorization.${address}`, jwtToken)
+        .then(() => {
           console.log('user authenticated')
         })
         .catch((error) => {
           console.error(error)
 
           // disconnect wallet on error
+          resetAuthenticationToken()
           disconnect()
         })
     },
     onDisconnect() {
       // remove authorization data
-      const address = localStorage.getItem('authorization.address')
-      localStorage.removeItem(`authorization.${address}`)
-      localStorage.removeItem('authorization.address')
+      resetAuthenticationToken()
     },
   })
 
