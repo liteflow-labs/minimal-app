@@ -14,19 +14,19 @@ export default function Home() {
   const { address, isConnected } = useAccount()
   const { connect } = useConnect({
     connector: new InjectedConnector(),
-    chainId: chain[process.env.NEXT_PUBLIC_CHAIN_NAME].chainId, // Polygon Mumbai
+    chainId: chain[process.env.NEXT_PUBLIC_CHAIN_NAME].id, // Pass the name of the Wagmi supported chain. See "chain" types or (https://wagmi.sh/docs/providers/configuring-chains#chains)
   })
   const { disconnect } = useDisconnect()
 
   const create = useCallback(async () => {
-    const amount = parseFloat(prompt('amount in USDC'))
+    const price = parseFloat(prompt('Price of the offer'))
     const id = await _create({
       type: 'BUY',
       assetId: process.env.NEXT_PUBLIC_ASSET_ID, // Pass a desired asset ID,
       currencyId: process.env.NEXT_PUBLIC_CURRENCY_ID, // Pass the desired currency ID
       expiredAt: new Date(Date.now() + 1000 * 60 * 60),
       quantity: BigNumber.from(1),
-      unitPrice: BigNumber.from(amount * 1e6),
+      unitPrice: BigNumber.from(price * 1e6), // Replace `1e6` by the right number of decimals of the used currency to shift the price to unit.
     })
     alert(id)
   }, [_create])
