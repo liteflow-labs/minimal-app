@@ -1,12 +1,5 @@
 import styles from '../styles/app.module.css'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { setContext } from '@apollo/client/link/context'
-import {
-  ApolloClient,
-  ApolloProvider,
-  createHttpLink,
-  InMemoryCache,
-} from '@apollo/client'
 import { getDefaultWallets, RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 import { AppProps } from 'next/app'
@@ -19,8 +12,8 @@ import {
   useDisconnect,
 } from 'wagmi'
 import { publicProvider } from 'wagmi/providers/public'
-import { PropsWithChildren, useEffect } from 'react'
-import { useAuthenticate } from '@nft/hooks'
+import { PropsWithChildren } from 'react'
+import { LiteflowProvider, useAuthenticate } from '@nft/hooks'
 
 const { chains, provider } = configureChains(
   [chain[process.env.NEXT_PUBLIC_CHAIN_NAME]], // Pass the name of the Wagmi supported chain. See "chain" types or (https://wagmi.sh/docs/providers/configuring-chains#chains)
@@ -38,30 +31,9 @@ const wagmiClient = createClient({
   provider,
 })
 
-const authLink = setContext((_, context) => {
-  const address = localStorage.getItem('authorization.address')
-  const authorization = localStorage.getItem(`authorization.${address}`)
-  if (!authorization) return context
-  return {
-    ...context,
-    headers: {
-      ...context.headers,
-      authorization: `Bearer ${authorization}`,
-    },
-  }
-})
-
-const apolloClient = new ApolloClient({
-  link: authLink.concat(
-    createHttpLink({
-      uri: process.env.NEXT_PUBLIC_ENDPOINT, // Pass the API endpoint of your app
-    }),
-  ),
-  cache: new InMemoryCache({}),
-})
-
-function AccountManager(props: PropsWithChildren) {
-  const [authenticate] = useAuthenticate()
+function AccountProvider(props: PropsWithChildren) {
+  const [authenticate, { setAuthenticationToken, resetAuthenticationToken }] =
+    useAuthenticate()
   const { disconnect } = useDisconnect()
   useAccount({
     async onConnect({ address, connector }) {
@@ -70,6 +42,8 @@ function AccountManager(props: PropsWithChildren) {
         localStorage.getItem('authorization.address') === address &&
         localStorage.getItem(`authorization.${address}`)
       ) {
+        // since the user is already authenticated we can autoconnect
+        setAuthenticationToken(localStorage.getItem(`authorization.${address}`))
         // TODO: should check the expiration date of the jwt token to make sure it's still valid
         return
       }
@@ -90,10 +64,11 @@ function AccountManager(props: PropsWithChildren) {
         })
     },
     onDisconnect() {
-      // remove authorization data
+      // remove authorization and authentication data
       const address = localStorage.getItem('authorization.address')
       localStorage.removeItem(`authorization.${address}`)
       localStorage.removeItem('authorization.address')
+      resetAuthenticationToken()
     },
   })
 
@@ -102,18 +77,18 @@ function AccountManager(props: PropsWithChildren) {
 
 function MyApp({ Component, pageProps }: AppProps): JSX.Element {
   return (
-    <ApolloProvider client={apolloClient}>
-      <WagmiConfig client={wagmiClient}>
-        <RainbowKitProvider chains={chains} coolMode>
-          <AccountManager>
+    <WagmiConfig client={wagmiClient}>
+      <RainbowKitProvider chains={chains} coolMode>
+        <LiteflowProvider endpoint={process.env.NEXT_PUBLIC_ENDPOINT}>
+          <AccountProvider>
             <div className={styles.app}>
               <ConnectButton />
               <Component {...pageProps} />
             </div>
-          </AccountManager>
-        </RainbowKitProvider>
-      </WagmiConfig>
-    </ApolloProvider>
+          </AccountProvider>
+        </LiteflowProvider>
+      </RainbowKitProvider>
+    </WagmiConfig>
   )
 }
 
