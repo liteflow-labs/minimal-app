@@ -31,7 +31,7 @@ const wagmiClient = createClient({
   provider,
 })
 
-function AccountManager(props: PropsWithChildren) {
+function AccountProvider(props: PropsWithChildren) {
   const [authenticate, { setAuthenticationToken, resetAuthenticationToken }] =
     useAuthenticate()
   const { disconnect } = useDisconnect()
@@ -80,12 +80,12 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
     <WagmiConfig client={wagmiClient}>
       <RainbowKitProvider chains={chains} coolMode>
         <LiteflowProvider endpoint={process.env.NEXT_PUBLIC_ENDPOINT}>
-          <AccountManager>
+          <AccountProvider>
             <div className={styles.app}>
               <ConnectButton />
               <Component {...pageProps} />
             </div>
-          </AccountManager>
+          </AccountProvider>
         </LiteflowProvider>
       </RainbowKitProvider>
     </WagmiConfig>
