@@ -13,8 +13,7 @@ import {
 } from 'wagmi'
 import { publicProvider } from 'wagmi/providers/public'
 import { PropsWithChildren } from 'react'
-import { useAuthenticate } from '@nft/hooks'
-import { LiteflowProvider } from '@nft/hooks'
+import { LiteflowProvider, useAuthenticate } from '@nft/hooks'
 
 const { chains, provider } = configureChains(
   [chain[process.env.NEXT_PUBLIC_CHAIN_NAME]], // Pass the name of the Wagmi supported chain. See "chain" types or (https://wagmi.sh/docs/providers/configuring-chains#chains)
